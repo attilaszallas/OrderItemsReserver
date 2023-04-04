@@ -1,39 +1,50 @@
 using System;
 using System.IO;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using Azure.Storage.Blobs;
 
 namespace OrderItemsReserver
 {
-    public static class Function1
+	public static class Function1
     {
         [FunctionName("Function1")]
         public static async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,
             ILogger log)
         {
-            log.LogInformation("C# HTTP trigger function processed a request.");
-
-			string name = req.Query["name"];
+			log.LogInformation("C# HTTP trigger function processed a request.");
 
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
 
-			// store requestBody in blob storage
+			string storageConfig = Environment.GetEnvironmentVariable("BlobConnectionString", EnvironmentVariableTarget.Process);
+			string blobContainerName = Environment.GetEnvironmentVariable("BlobContainerName", EnvironmentVariableTarget.Process);
 
-            dynamic data = JsonConvert.DeserializeObject(requestBody);
-            name = name ?? data?.name;
+			BlobServiceClient blobServiceClient = new BlobServiceClient(storageConfig);
 
-            string responseMessage = string.IsNullOrEmpty(name)
-                ? "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response."
-                : $"Hello, {name}. This HTTP triggered function executed successfully.";
+			// Get the container (folder) the file will be saved in
+			BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(blobContainerName);
 
-            return new OkObjectResult(responseMessage);
+			string blobName = blobContainerName + DateTime.UtcNow.ToShortTimeString();
+
+			// Get the Blob Client used to interact with (including create) the blob
+			BlobClient blobClient = containerClient.GetBlobClient(blobName);
+
+			using (MemoryStream ms = new MemoryStream(Encoding.UTF8.GetBytes(requestBody)))
+			{
+				await blobClient.UploadAsync(ms);
+			}
+
+            string responseMessage = string.IsNullOrEmpty(requestBody)
+                ? "This HTTP triggered function failed."
+                : $"This HTTP triggered function executed successfully. {requestBody}";
+
+			return new OkObjectResult(responseMessage);
         }
 	}
 }
