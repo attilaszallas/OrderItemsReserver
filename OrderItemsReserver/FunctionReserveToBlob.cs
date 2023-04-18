@@ -11,9 +11,9 @@ using Azure.Storage.Blobs;
 
 namespace OrderItemsReserver
 {
-	public static class Function1
+	public static class FunctionReserveToBlob
     {
-        [FunctionName("Function1")]
+        [FunctionName("ReserveToBlob")]
         public static async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,
             ILogger log)
