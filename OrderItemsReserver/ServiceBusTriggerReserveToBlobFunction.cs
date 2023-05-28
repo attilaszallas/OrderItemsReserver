@@ -19,8 +19,13 @@ namespace OrderItemsReserver
 
             try
             {
-                string storageConfig = Environment.GetEnvironmentVariable("BlobConnectionString", EnvironmentVariableTarget.Process);
-                string blobContainerName = Environment.GetEnvironmentVariable("BlobContainerName", EnvironmentVariableTarget.Process);
+                // Handle errors test by sending the email through Logic Apps
+                // throw new Exception("Test Exception");
+
+                string blobContainerName = "orderitemreserverblob";
+
+                // Storage account / Access keys / key1 -> Connection string
+                string storageConfig = "DefaultEndpointsProtocol=https;AccountName=finalassignmentb45d;AccountKey=mN0h5tQ/Bf7w7O0L5OMsLpZQUAGSD2x0yhUvB6IeQd1QD9iOMf9Yg8tji+qD4nUmKxu5i+FirWGl+ASt/l6TDQ==;EndpointSuffix=core.windows.net";               
 
                 BlobServiceClient blobServiceClient = new BlobServiceClient(storageConfig);
 
@@ -55,7 +60,9 @@ namespace OrderItemsReserver
         private async Task PostHttpMessageAsync(string message)
         {
             HttpClient httpclient = new HttpClient();
-            var requestUri = Environment.GetEnvironmentVariable("LogicAppEndpoint", EnvironmentVariableTarget.Process);
+
+            // Logic app / Logic app designer / When a HTTP request is received panel -> HTTP POST URL
+            var requestUri = "https://prod-45.westeurope.logic.azure.com:443/workflows/b731667d5b14481983682d0c1237caa0/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=weTx3bCh9LdsY3L1BkiMJ5emMQ-LXsXfLv13u1x5Ios";
 
             HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri);
             httpRequestMessage.Content = new StringContent(message);
